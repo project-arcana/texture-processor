@@ -63,6 +63,7 @@ struct block2D
 };
 }
 
+// TODO: "mapping views" (like treating an rgb image as a grayscale image via "map")
 template <class BaseT>
 struct traits : BaseT
 {

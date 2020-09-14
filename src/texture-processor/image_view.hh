@@ -8,6 +8,10 @@
 #include <texture-processor/storage_view.hh>
 #include <texture-processor/traits.hh>
 
+// prevent inclusion of more tg
+#include <typed-geometry/detail/operators/ops_pos.hh>
+#include <typed-geometry/detail/operators/ops_vec.hh>
+
 namespace tp
 {
 /**
@@ -28,6 +32,7 @@ struct image_view : detail::accessor<BaseTraits::dimensions, image_view<BaseTrai
     using data_ptr_t = typename storage_view_t::data_ptr_t;
     using accessor_t = detail::accessor<BaseTraits::dimensions, image_view<BaseTraits>>;
 
+    static constexpr int dimensions = traits::dimensions;
     static constexpr bool is_mutable = traits::is_writeable;
     static constexpr bool is_readonly = !traits::is_writeable;
 
@@ -38,6 +43,9 @@ public:
     /// stride used to access storage
     /// TODO: does this apply to z order?
     ivec_t const& stride() const { return _stride; }
+
+    /// returns true if the image view does not contain any pixels
+    bool empty() const { return detail::is_any_zero(_extent.to_ivec()); }
 
     // pixel access
 public:
@@ -57,6 +65,23 @@ public:
     }
     element_access_t operator[](ipos_t const& p) const { return this->at(p); }
     element_access_t operator()(ipos_t const& p) const { return this->at(p); }
+
+    // subviews
+    // TODO: how to change between different types?
+public:
+    /// returns a subview that contains all pixels by start and extent
+    image_view subview(ipos_t start, extent_t extent) const
+    {
+        CC_ASSERT((detail::is_any_zero(extent.to_ivec()) || contains(start)) && "subview out of bounds");
+        CC_ASSERT((detail::is_any_zero(extent.to_ivec()) || contains(start + extent.to_ivec() - 1)) && "subview out of bounds");
+        image_view v;
+        v._data_ptr = _data_ptr + detail::strided_offset(start, _stride);
+        v._extent = extent;
+        v._stride = _stride;
+        return v;
+    }
+    image_view subview(tg::aabb<dimensions, int> const& bb) const { return this->subview(bb.min, extent_t::from_ivec(bb.max - bb.min + 1)); }
+
 
     // creation
 public:
