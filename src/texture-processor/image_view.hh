@@ -24,8 +24,8 @@ template <class BaseTraits>
 struct image_view : detail::accessor<BaseTraits::dimensions, image_view<BaseTraits>>
 {
     using traits = traits<BaseTraits>;
-    using element_t = typename traits::element_t;
-    using element_access_t = typename traits::element_access_t;
+    using pixel_t = typename traits::pixel_t;
+    using pixel_access_t = typename traits::pixel_access_t;
     using pos_t = typename traits::pos_t;
     using ipos_t = typename traits::ipos_t;
     using ivec_t = typename traits::ivec_t;
@@ -50,10 +50,13 @@ public:
 
     /// returns true if this view has natural stride (contiguous row-by-row)
     /// TODO: also check storage?
-    bool has_natural_stride() const { return detail::is_natural_stride(_byte_stride, sizeof(element_t), _extent.to_ivec()); }
+    bool has_natural_stride() const { return detail::is_natural_stride(_byte_stride, sizeof(pixel_t), _extent.to_ivec()); }
 
     /// size in bytes (if this were to be stored compactly)
-    size_t byte_size() const { return _extent.elements() * sizeof(element_t); }
+    size_t byte_size() const { return _extent.pixels() * sizeof(pixel_t); }
+
+    /// returns number of pixels
+    size_t pixel_count() const { return _extent.pixels(); }
 
     /// returns true if the image view does not contain any pixels
     bool empty() const { return detail::is_any_zero(_extent.to_ivec()); }
@@ -71,16 +74,16 @@ public:
     /// TODO: what should this return for array textures? are the layers considered for boundary or not?
     bool is_on_boundary(ipos_t const& p) const { return detail::is_on_boundary(p); }
 
-    /// returns the element at a given position
+    /// returns the pixel at a given position
     /// NOTE: depending on the storage, this might or might not be a reference
-    element_access_t at(ipos_t const& p) const
+    pixel_access_t at(ipos_t const& p) const
     {
         CC_ASSERT(contains(p));
-        return storage_view_t::element_at(_data_ptr, p, _byte_stride);
+        return storage_view_t::pixel_at(_data_ptr, p, _byte_stride);
     }
-    element_access_t at_unchecked(ipos_t const& p) const { return storage_view_t::element_at(_data_ptr, p, _byte_stride); }
-    element_access_t operator[](ipos_t const& p) const { return this->at(p); }
-    element_access_t operator()(ipos_t const& p) const { return this->at(p); }
+    pixel_access_t at_unchecked(ipos_t const& p) const { return storage_view_t::pixel_at(_data_ptr, p, _byte_stride); }
+    pixel_access_t operator[](ipos_t const& p) const { return this->at(p); }
+    pixel_access_t operator()(ipos_t const& p) const { return this->at(p); }
 
     // subviews
     // TODO: how to change between different types?
@@ -100,40 +103,46 @@ public:
 
     // iteration
 public:
+    /// returns an iterable that enumerates all pixels and their positions at the same
+    auto begin() const -> typename traits::entry_iterator_t { return {_data_ptr, _byte_stride, _extent.to_ivec()}; }
+    cc::sentinel end() const { return {}; }
+
     /// returns an iterable range that enumerates all ipos_t pixel positions in an memory optimized order
     /// usage:
     ///    for (tg::ipos2 p : my_image2.positions()) { ... }
     auto positions() const -> detail::srange<typename traits::position_iterator_t> { return {{_byte_stride, _extent.to_ivec()}}; }
+
     /// returns an iterable range that visits all pixel values in an memory optimized order
     /// usage:
     ///    for (auto& v : my_image2.pixels())
     ///        v = tg::color3::red;
-    auto elements() const -> detail::srange<typename traits::position_iterator_t> { return {{_byte_stride, _extent.to_ivec()}}; }
+    auto pixels() const -> detail::srange<typename traits::pixel_iterator_t> { return {{_data_ptr, _byte_stride, _extent.to_ivec()}}; }
 
     /// iterates over the image (in an optimized order)
     /// calls F for each pixel position
     /// signature: (ipos_t) -> void OR
-    ///            (ipos_t, element_access_t) -> void
+    ///            (ipos_t, pixel_access_t) -> void
     template <class F>
     void for_each(F&& f)
     {
         for (auto p : this->positions())
             if constexpr (std::is_invocable_v<F, ipos_t>)
                 f(p);
-            else if constexpr (std::is_invocable_v<F, ipos_t, element_access_t>)
+            else if constexpr (std::is_invocable_v<F, ipos_t, pixel_access_t>)
                 f(p, at_unchecked(p));
             else
-                static_assert(cc::always_false<F>, "function must be callable with ipos_t or (ipos_t, element_access_t)");
+                static_assert(cc::always_false<F>, "function must be callable with ipos_t or (ipos_t, pixel_access_t)");
     }
 
     // copying
 public:
     /// copies all pixels to the parameter image
     /// NOTE: target must have same dimension and extent
-    ///       converter can be used to customize behavior when changing element types
-    ///       signature: (src_element const&) -> target_element OR
-    ///                  (target_element&, src_element cont&) -> void
+    ///       converter can be used to customize behavior when changing pixel types
+    ///       signature: (src_pixel const&) -> target_pixel OR
+    ///                  (target_pixel&, src_pixel cont&) -> void
     /// TODO: performance speedup via detecting cases where memcpy works
+    ///       performance speedup via block copy when strides mismatch
     template <class RhsTraits, class ConverterT = default_converter>
     void copy_to(image_view<RhsTraits> rhs, ConverterT&& convert = {}) const
     {
@@ -143,9 +152,9 @@ public:
 
         for (auto p : this->positions())
         {
-            if constexpr (std::is_invocable_r_v<typename image_view<RhsTraits>::element_t, ConverterT, element_t const&>)
+            if constexpr (std::is_invocable_r_v<typename image_view<RhsTraits>::pixel_t, ConverterT, pixel_t const&>)
                 rhs.at_unchecked(p) = convert(at_unchecked(p));
-            else if constexpr (std::is_invocable_v<ConverterT, typename image_view<RhsTraits>::element_access_t, element_t const&>)
+            else if constexpr (std::is_invocable_v<ConverterT, typename image_view<RhsTraits>::pixel_access_t, pixel_t const&>)
                 convert(rhs.at_unchecked(p), at_unchecked(p));
             else
                 static_assert(cc::always_false<RhsTraits, ConverterT>, "no suitable call syntax found for converter");

@@ -4,7 +4,7 @@
 
 namespace tp
 {
-/// functor that implements default conversion between element types
+/// functor that implements default conversion between pixel types
 struct default_converter
 {
     template <class TargetT, class SourceT>

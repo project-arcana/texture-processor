@@ -7,6 +7,16 @@
 
 #include <texture-processor/detail/predicates.hh>
 
+namespace tp
+{
+template <int D, class PixelT>
+struct pixel_entry
+{
+    tg::pos<D, int> const pos;
+    PixelT pixel;
+};
+}
+
 namespace tp::detail
 {
 template <class iterator_t>
@@ -51,6 +61,9 @@ struct strided_linear_pos_iterator
         }
         else
             static_assert(cc::always_false<D>, "dimension not supported / implemented");
+
+        if (detail::is_any_zero(extent))
+            _extent[D - 1] = 0;
     }
 
     tg::pos<D, int> operator*() const
@@ -99,19 +112,7 @@ struct strided_linear_pos_iterator
         }
     }
 
-    bool operator!=(cc::sentinel) const
-    {
-        if constexpr (D == 1)
-            return _idx[0] != _extent[0];
-        else if constexpr (D == 2)
-            return _idx[0] != _extent[0] || _idx[1] != _extent[1];
-        else if constexpr (D == 3)
-            return _idx[0] != _extent[0] || _idx[1] != _extent[1] || _idx[2] != _extent[2];
-        else if constexpr (D == 4)
-            return _idx[0] != _extent[0] || _idx[1] != _extent[1] || _idx[2] != _extent[2] || _idx[3] != _extent[3];
-        else
-            static_assert(cc::always_false<D>, "dimension not supported");
-    }
+    bool operator!=(cc::sentinel) const { return _idx[D - 1] != _extent[D - 1]; }
 
 private:
     int _idx[D] = {};
@@ -121,17 +122,43 @@ private:
 
 // TODO: can be optimized by sharing stride and extent with pos iterator
 template <int D, class StorageViewT>
-struct strided_linear_element_iterator
+struct strided_linear_pixel_iterator
 {
     using data_ptr_t = typename StorageViewT::data_ptr_t;
 
-    strided_linear_element_iterator(data_ptr_t data, tg::vec<D, int> byte_stride, tg::vec<D, int> extent)
+    strided_linear_pixel_iterator(data_ptr_t data, tg::vec<D, int> byte_stride, tg::vec<D, int> extent)
       : _pos_it(byte_stride, extent), _data(data), _byte_stride(byte_stride)
     {
     }
 
-    typename StorageViewT::element_access_t operator*() const { return StorageViewT::element_at(_data, *_pos_it, _byte_stride); }
-    void operator++() { _pos_it++; }
+    typename StorageViewT::pixel_access_t operator*() const { return StorageViewT::pixel_at(_data, *_pos_it, _byte_stride); }
+    void operator++() { ++_pos_it; }
+    bool operator!=(cc::sentinel) const { return _pos_it != cc::sentinel{}; }
+
+private:
+    strided_linear_pos_iterator<D> _pos_it;
+    data_ptr_t _data;
+    tg::vec<D, int> _byte_stride;
+};
+
+// TODO: can be optimized by sharing stride and extent with pos iterator
+template <int D, class StorageViewT>
+struct strided_linear_entry_iterator
+{
+    using data_ptr_t = typename StorageViewT::data_ptr_t;
+    using pixel_access_t = typename StorageViewT::pixel_access_t;
+
+    strided_linear_entry_iterator(data_ptr_t data, tg::vec<D, int> byte_stride, tg::vec<D, int> extent)
+      : _pos_it(byte_stride, extent), _data(data), _byte_stride(byte_stride)
+    {
+    }
+
+    pixel_entry<D, pixel_access_t> operator*() const
+    {
+        auto pos = *_pos_it;
+        return {pos, StorageViewT::pixel_at(_data, pos, _byte_stride)};
+    }
+    void operator++() { ++_pos_it; }
     bool operator!=(cc::sentinel) const { return _pos_it != cc::sentinel{}; }
 
 private:

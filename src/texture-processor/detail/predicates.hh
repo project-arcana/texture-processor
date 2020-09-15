@@ -46,8 +46,8 @@ constexpr tg::ivec3 natural_stride_for(int s, tg::ivec3 const& e) { return {s, e
 constexpr tg::ivec4 natural_stride_for(int s, tg::ivec4 const& e) { return {s, e.x * s, e.x * e.y * s, e.x * e.y * e.z * s}; }
 
 template <int D>
-constexpr bool is_natural_stride(tg::vec<D, int> const& stride, int element_size, tg::vec<D, int> const& extent)
+constexpr bool is_natural_stride(tg::vec<D, int> const& stride, int pixel_size, tg::vec<D, int> const& extent)
 {
-    return stride == natural_stride_for(element_size, extent);
+    return stride == natural_stride_for(pixel_size, extent);
 }
 }

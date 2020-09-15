@@ -17,7 +17,7 @@ template <class BaseTraits>
 struct image : image_view<BaseTraits>
 {
     using traits = traits<BaseTraits>;
-    using element_t = typename traits::element_t;
+    using pixel_t = typename traits::pixel_t;
     using pos_t = typename traits::pos_t;
     using ipos_t = typename traits::ipos_t;
     using extent_t = typename traits::extent_t;
@@ -29,7 +29,7 @@ struct image : image_view<BaseTraits>
 public:
     image() = default;
 
-    static image filled(extent_t e, element_t const& initial_value)
+    static image filled(extent_t e, pixel_t const& initial_value)
     {
         image img;
         img.resize(e, initial_value);
@@ -50,17 +50,17 @@ public:
 
     void resize(extent_t e)
     {
-        this->_storage.resize_defaulted(e.elements());
+        this->_storage.resize_defaulted(e.pixels());
         this->init_data_view(e);
     }
-    void resize(extent_t e, element_t const& fill_value)
+    void resize(extent_t e, pixel_t const& fill_value)
     {
-        this->_storage.resize_filled(e.elements(), fill_value);
+        this->_storage.resize_filled(e.pixels(), fill_value);
         this->init_data_view(e);
     }
     void resize_uninitialized(extent_t e)
     {
-        this->_storage.resize_uninitialized(e.elements());
+        this->_storage.resize_uninitialized(e.pixels());
         this->init_data_view(e);
     }
 
@@ -75,7 +75,7 @@ private:
         // TODO: stride for block and z order storage
         this->_extent = e;
         this->_data_ptr = reinterpret_cast<data_ptr_t>(this->_storage.data.data());
-        this->_byte_stride = detail::natural_stride_for(sizeof(element_t), e.to_ivec());
+        this->_byte_stride = detail::natural_stride_for(sizeof(pixel_t), e.to_ivec());
     }
 
     // members

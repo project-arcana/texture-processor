@@ -36,13 +36,13 @@ bool write_to_file(image_view<BaseTraits> img, cc::string_view filename)
     auto is_hdr = ext.equals_ignore_case("hdr");
     auto channels = img.channels;
 
-    auto target_element_size = channels * (is_hdr ? 4 : 1);
+    auto target_pixel_size = channels * (is_hdr ? 4 : 1);
 
     CC_ASSERT(img.dimensions == 2 && "only 2D images supported currently");
     auto extents = img.extent().to_ivec();
 
     // properly strided linear memory can be saved directly
-    if (target_element_size == sizeof(typename image_view<BaseTraits>::element_t) && image_view<BaseTraits>::storage_t::is_strided_linear && img.has_natural_stride())
+    if (target_pixel_size == sizeof(typename image_view<BaseTraits>::pixel_t) && image_view<BaseTraits>::storage_t::is_strided_linear && img.has_natural_stride())
     {
         return detail::write_to_file(filename, ext, cc::span<std::byte const>(img.data_ptr(), img.byte_size()), extents.x, extents.y, channels);
     }

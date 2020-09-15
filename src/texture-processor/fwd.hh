@@ -47,7 +47,9 @@ namespace detail
 template <int D>
 struct strided_linear_pos_iterator;
 template <int D, class StorageViewT>
-struct strided_linear_element_iterator;
+struct strided_linear_pixel_iterator;
+template <int D, class StorageViewT>
+struct strided_linear_entry_iterator;
 }
 
 //
