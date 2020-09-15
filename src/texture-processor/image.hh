@@ -75,7 +75,7 @@ private:
         // TODO: stride for block and z order storage
         this->_extent = e;
         this->_data_ptr = reinterpret_cast<data_ptr_t>(this->_storage.data.data());
-        this->_stride = detail::natural_stride_for(sizeof(element_t), e.to_ivec());
+        this->_byte_stride = detail::natural_stride_for(sizeof(element_t), e.to_ivec());
     }
 
     // members

@@ -13,9 +13,10 @@ template <class T>
 struct linear_storage_view
 {
     using data_ptr_t = std::conditional_t<std::is_const_v<T>, std::byte const*, std::byte*>;
+    using element_access_t = T&;
 
     template <int D>
-    static T& element_at(data_ptr_t data, tg::pos<D, int> p, tg::vec<D, int> stride)
+    static element_access_t element_at(data_ptr_t data, tg::pos<D, int> p, tg::vec<D, int> stride)
     {
         return *reinterpret_cast<T*>(data + detail::strided_offset(p, stride));
     }

@@ -22,7 +22,7 @@ target_include_directories(texture-processor PUBLIC src/)
 target_link_libraries(texture-processor PUBLIC
     clean-core
     typed-geometry
-    babel-serializer # TODO: make optional OR invert the dependency
+    babel-serializer # TODO: make optional
 )
 
 

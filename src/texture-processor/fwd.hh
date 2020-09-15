@@ -40,6 +40,17 @@ template <class T>
 struct z_storage_view;
 
 //
+// iteration
+//
+namespace detail
+{
+template <int D>
+struct strided_linear_pos_iterator;
+template <int D, class StorageViewT>
+struct strided_linear_element_iterator;
+}
+
+//
 // traits
 // TODO: better solution
 //
