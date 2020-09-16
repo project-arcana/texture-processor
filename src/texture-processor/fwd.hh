@@ -16,6 +16,7 @@ struct image_view;
 struct extent1;
 struct extent2;
 struct extent3;
+struct extent1_array;
 struct extent2_array;
 struct extent_cube;
 
@@ -60,18 +61,18 @@ template <class BaseT>
 struct traits;
 namespace base_traits
 {
-template <class ElementT>
+template <class PixelT>
 struct linear2D;
-template <class ElementT, class BlockT>
+template <class PixelT, class BlockT>
 struct block2D;
-template <class ElementT>
+template <class PixelT>
 struct z2D;
 }
 
 //
 // predefined images
 //
-template <class ElementT>
-using image2 = image<base_traits::linear2D<ElementT>>;
+template <class PixelT>
+using image2 = image<base_traits::linear2D<PixelT>>;
 
 }

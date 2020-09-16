@@ -8,6 +8,7 @@
 
 // TODO: implicit conversions from tg::size types where appropriate
 // TODO: convert to proper xD (e.g. extent_cube to ivec3)
+// NOTE: when adding a new extent, don't forge to add it to shape_access in detail/accessor
 namespace tp
 {
 struct extent1
@@ -38,6 +39,16 @@ struct extent3
     tg::ivec3 to_ivec() const { return {width, height, depth}; }
     static extent3 from_ivec(tg::ivec3 const& e) { return {e.x, e.y, e.z}; }
     uint64_t pixels() const { return width * height * depth; }
+};
+
+struct extent1_array
+{
+    int width = 0;
+    int layers = 0;
+
+    tg::ivec2 to_ivec() const { return {width, layers}; }
+    static extent1_array from_ivec(tg::ivec2 const& e) { return {e.x, e.y}; }
+    uint64_t pixels() const { return width * layers; }
 };
 
 struct extent2_array

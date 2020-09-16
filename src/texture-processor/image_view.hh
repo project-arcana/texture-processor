@@ -1,6 +1,7 @@
 #pragma once
 
 #include <clean-core/assert.hh>
+#include <clean-core/utility.hh>
 
 #include <texture-processor/convert.hh>
 #include <texture-processor/detail/accessor.hh>
@@ -21,7 +22,8 @@ namespace tp
  * mutable or readonly is communicated via traits (NOT via image_view<T> const)
  */
 template <class BaseTraits>
-struct image_view : detail::accessor<BaseTraits::dimensions, image_view<BaseTraits>>
+struct image_view : detail::accessor<BaseTraits::dimensions, image_view<BaseTraits>>,           // e.g. img(x, y), img.at(x, y)
+                    detail::shape_access<typename BaseTraits::extent_t, image_view<BaseTraits>> // ex img.width(), img.height()
 {
     using traits = traits<BaseTraits>;
     using pixel_t = typename traits::pixel_t;
@@ -72,7 +74,7 @@ public:
 
     /// returns true iff the given position denotes a valid pixel on the boundary of the image
     /// TODO: what should this return for array textures? are the layers considered for boundary or not?
-    bool is_on_boundary(ipos_t const& p) const { return detail::is_on_boundary(p); }
+    bool is_on_boundary(ipos_t const& p) const { return detail::is_on_boundary(p, _extent.to_ivec()); }
 
     /// returns the pixel at a given position
     /// NOTE: depending on the storage, this might or might not be a reference
@@ -89,7 +91,7 @@ public:
     // TODO: how to change between different types?
 public:
     /// returns a subview that contains all pixels by start and extent
-    image_view subview(ipos_t start, extent_t extent) const
+    [[nodiscard]] image_view subview(ipos_t start, extent_t extent) const
     {
         CC_ASSERT((detail::is_any_zero(extent.to_ivec()) || contains(start)) && "subview out of bounds");
         CC_ASSERT((detail::is_any_zero(extent.to_ivec()) || contains(start + extent.to_ivec() - 1)) && "subview out of bounds");
@@ -99,7 +101,69 @@ public:
         v._byte_stride = _byte_stride;
         return v;
     }
-    image_view subview(tg::aabb<dimensions, int> const& bb) const { return this->subview(bb.min, extent_t::from_ivec(bb.max - bb.min + 1)); }
+    [[nodiscard]] image_view subview(tg::aabb<dimensions, int> const& bb) const
+    {
+        return this->subview(bb.min, extent_t::from_ivec(bb.max - bb.min + 1));
+    }
+
+    /// returns an image view where the dimension D is mirrored
+    /// NOTE: there are also non-templated versions like mirrored_x()
+    /// TODO: static assert when storage does not allow this operation
+    template <int D>
+    [[nodiscard]] image_view mirrored() const
+    {
+        static_assert(0 <= D && D < dimensions, "invalid dimension");
+        auto ev = _extent.to_ivec();
+        image_view v = *this; // copy
+        if (ev[D] != 0)
+        {
+            v._data_ptr += v._byte_stride[D] * tg::i64(ev[D] - 1);
+            v._byte_stride[D] = -v._byte_stride[D];
+        }
+        return v;
+    }
+
+    /// returns an image view where the dimensions D0 and D1 are swapped
+    /// (D0 == D1 is ok and returns this)
+    /// NOTE: some image types have restrictions on which dimensions to swap (e.g. #faces in a cubemap)
+    /// NOTE: there are also non-templated versions like swapped_xy()
+    /// TODO: static assert when storage does not allow this operation
+    template <int D0, int D1>
+    [[nodiscard]] image_view swapped() const
+    {
+        static_assert(0 <= D0 && D0 < dimensions, "invalid dimension");
+        static_assert(0 <= D1 && D1 < dimensions, "invalid dimension");
+        if constexpr (D0 == D1)
+            return *this;
+        else
+        {
+            auto ev = _extent.to_ivec();
+            cc::swap(ev[D0], ev[D1]);
+            image_view v = *this; // copy
+            cc::swap(v._byte_stride[D0], v._byte_stride[D1]);
+            v._extent = extent_t::from_ivec(ev);
+            return v;
+        }
+    }
+
+    /// returns a sliced view where the given dimension is dropped
+    /// (e.g. img.sliced_at<1>(7) of a 2D image returns a view to its 8th row)
+    /// NOTE: not all views can be sliced at all dimensions
+    /// NOTE: there are also non-templated versions like row(i) or layer(i)
+    /// TODO: static assert when storage does not allow this operation
+    template <int D>
+    [[nodiscard]] image_view<typename traits::template sliced_traits<D>> sliced_at(int i) const
+    {
+        static_assert(0 <= D && D < dimensions, "invalid dimension");
+        static_assert(traits::template can_be_sliced_at<D>);
+        CC_ASSERT(0 <= i && i < _extent.to_ivec()[D] && "slice out of bounds");
+        using new_view_t = image_view<typename traits::template sliced_traits<D>>;
+        new_view_t v;
+        v._data_ptr = _data_ptr + _byte_stride[D] * i;
+        v._byte_stride = detail::skip_index<D>::value(_byte_stride);
+        v._extent = new_view_t::extent_t::from_ivec(detail::skip_index<D>::value(_extent.to_ivec()));
+        return v;
+    }
 
     // iteration
 public:
@@ -170,7 +234,7 @@ public:
     // creation
 public:
     /// creates an image view from unchecked raw data
-    static image_view from_data(data_ptr_t data, extent_t extent, ivec_t stride)
+    [[nodiscard]] static image_view from_data(data_ptr_t data, extent_t extent, ivec_t stride)
     {
         image_view v;
         v._data_ptr = data;

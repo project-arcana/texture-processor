@@ -5,6 +5,7 @@
 
 #include <typed-geometry/tg-lean.hh>
 
+#include <texture-processor/detail/slicing.hh>
 #include <texture-processor/fwd.hh>
 
 // keep includes minimal
@@ -15,24 +16,24 @@ namespace tp
 namespace detail
 {
 // TODO: make customizable
-template <class ElementT>
+template <class PixelT>
 constexpr int channels_of()
 {
-    if constexpr (std::is_arithmetic_v<ElementT>) // includes bool
+    if constexpr (std::is_arithmetic_v<PixelT>) // includes bool
         return 1;
     else
-        return tg::detail::comp_size<ElementT>::value;
+        return tg::detail::comp_size<PixelT>::value;
 }
 }
 
 namespace base_traits
 {
-template <class ElementT>
+template <class PixelT>
 struct linear2D
 {
-    static_assert(!std::is_reference_v<ElementT>, "cannot store references");
+    static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
-    using pixel_t = ElementT;
+    using pixel_t = PixelT;
     using extent_t = extent2;
     using storage_t = linear_storage<pixel_t>;
     using storage_view_t = linear_storage_view<pixel_t>;
@@ -48,12 +49,12 @@ struct linear2D
     using entry_iterator_t = detail::strided_linear_entry_iterator<dimensions, storage_view_t>;
 };
 
-template <class ElementT>
+template <class PixelT>
 struct z2D
 {
-    static_assert(!std::is_reference_v<ElementT>, "cannot store references");
+    static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
-    using pixel_t = ElementT;
+    using pixel_t = PixelT;
     using extent_t = extent2;
     using storage_t = z_storage<pixel_t>;
     using storage_view_t = z_storage_view<pixel_t>;
@@ -67,10 +68,10 @@ struct z2D
     using position_iterator_t = void; // TODO
 };
 
-template <class ElementT, class BlockT>
+template <class PixelT, class BlockT>
 struct block2D
 {
-    using pixel_t = ElementT;
+    using pixel_t = PixelT;
     using block_t = BlockT;
     using extent_t = extent2;
     using storage_t = linear_block_storage<pixel_t, block_t>;
@@ -89,6 +90,9 @@ struct block2D
 
 // TODO: "mapping views" (like treating an rgb image as a grayscale image via "map")
 // TODO: allow arrays as pixels for dynamic channel size
+// TODO: optimized power-of-two images
+// TODO: linear images that are not strided
+// TODO: multisampled images
 template <class BaseT>
 struct traits : BaseT
 {
@@ -105,6 +109,19 @@ struct traits : BaseT
 
     // TODO: dynamic channels
     static constexpr int channels = detail::channels_of<std::decay_t<pixel_t>>;
+
+    template <class NewExtentT>
+    using change_extent_t = void; // TODO
+    template <class NewPixelT>
+    using change_pixel_t = void; // TODO
+    template <class NewStorageT>
+    using change_storage_t = void; // TODO
+
+    using const_traits = change_pixel_t<pixel_t const>;
+    template <int D>
+    using sliced_traits = change_extent_t<detail::sliced_extents<extent_t, D>>;
+    template <int D>
+    static constexpr bool can_be_sliced_at = !std::is_same_v<sliced_traits<D>, void>;
 
     // sanity checks
     static_assert(BaseT::is_writeable || std::is_const_v<pixel_t>, "read-only images should have const pixels");

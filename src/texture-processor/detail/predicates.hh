@@ -50,4 +50,32 @@ constexpr bool is_natural_stride(tg::vec<D, int> const& stride, int pixel_size, 
 {
     return stride == natural_stride_for(pixel_size, extent);
 }
+
+template <int D>
+struct skip_index;
+template <>
+struct skip_index<0>
+{
+    constexpr tg::ivec1 value(tg::ivec2 const& v) { return {v.y}; }
+    constexpr tg::ivec2 value(tg::ivec3 const& v) { return {v.y, v.z}; }
+    constexpr tg::ivec3 value(tg::ivec4 const& v) { return {v.y, v.z, v.w}; }
+};
+template <>
+struct skip_index<1>
+{
+    constexpr tg::ivec1 value(tg::ivec2 const& v) { return {v.x}; }
+    constexpr tg::ivec2 value(tg::ivec3 const& v) { return {v.x, v.z}; }
+    constexpr tg::ivec3 value(tg::ivec4 const& v) { return {v.x, v.z, v.w}; }
+};
+template <>
+struct skip_index<2>
+{
+    constexpr tg::ivec2 value(tg::ivec3 const& v) { return {v.x, v.y}; }
+    constexpr tg::ivec3 value(tg::ivec4 const& v) { return {v.x, v.y, v.w}; }
+};
+template <>
+struct skip_index<3>
+{
+    constexpr tg::ivec3 value(tg::ivec4 const& v) { return {v.x, v.y, v.z}; }
+};
 }
