@@ -16,7 +16,7 @@ namespace tp
 template <class BaseTraits>
 struct image : image_view<BaseTraits>
 {
-    using traits = traits<BaseTraits>;
+    using traits = tp::traits<BaseTraits>;
     using pixel_t = typename traits::pixel_t;
     using pos_t = typename traits::pos_t;
     using ipos_t = typename traits::ipos_t;

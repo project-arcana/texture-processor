@@ -117,7 +117,7 @@ struct strided_linear_pos_iterator
 private:
     int _idx[D] = {};
     int _extent[D];
-    [[maybe_unused]] uint8_t _order[D];
+    uint8_t _order[D];
 };
 
 // TODO: can be optimized by sharing stride and extent with pos iterator

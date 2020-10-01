@@ -82,7 +82,7 @@ struct block2D
     static constexpr bool is_writeable = !std::is_const_v<pixel_t>;
     static constexpr bool is_block_based = true;
     static constexpr bool is_strided_linear = true;
-    static constexpr int block_sizes[] = block_t::block_sizes;
+    static constexpr auto block_sizes = block_t::block_sizes;
 
     using position_iterator_t = void; // TODO
 };

@@ -25,7 +25,7 @@ template <class BaseTraits>
 struct image_view : detail::accessor<BaseTraits::dimensions, image_view<BaseTraits>>,           // e.g. img(x, y), img.at(x, y)
                     detail::shape_access<typename BaseTraits::extent_t, image_view<BaseTraits>> // ex img.width(), img.height()
 {
-    using traits = traits<BaseTraits>;
+    using traits = tp::traits<BaseTraits>;
     using pixel_t = typename traits::pixel_t;
     using pixel_access_t = typename traits::pixel_access_t;
     using pos_t = typename traits::pos_t;
