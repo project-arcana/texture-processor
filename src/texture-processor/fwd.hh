@@ -79,6 +79,6 @@ using image2 = image<base_traits::linear2D<PixelT>>;
 // predefined views
 //
 template <class PixelT>
-using image2_view = image<base_traits::linear2D<PixelT>>;
+using image2_view = image_view<base_traits::linear2D<PixelT>>;
 
 }

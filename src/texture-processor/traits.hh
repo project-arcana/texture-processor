@@ -93,6 +93,7 @@ struct block2D
 // TODO: optimized power-of-two images
 // TODO: linear images that are not strided
 // TODO: multisampled images
+// TODO: tiled images (each axis independently, maybe only sampler property)
 template <class BaseT>
 struct traits : BaseT
 {
@@ -108,7 +109,7 @@ struct traits : BaseT
     using storage_view_t = typename base_t::storage_view_t;
 
     // TODO: dynamic channels
-    static constexpr int channels = detail::channels_of<std::decay_t<pixel_t>>;
+    static constexpr int channels = detail::channels_of<std::decay_t<pixel_t>>();
 
     template <class NewExtentT>
     using change_extent_t = void; // TODO
