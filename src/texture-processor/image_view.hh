@@ -198,6 +198,16 @@ public:
                 static_assert(cc::always_false<F>, "function must be callable with ipos_t or (ipos_t, pixel_access_t)");
     }
 
+    // modification
+public:
+    /// overwrites all pixels with the given value
+    void fill(pixel_t const& value)
+    {
+        static_assert(is_mutable, "cannot write to this image");
+        for (auto& p : pixels())
+            p = value;
+    }
+
     // copying
 public:
     /// copies all pixels to the parameter image
