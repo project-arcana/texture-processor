@@ -2,6 +2,7 @@
 
 #include <clean-core/forward.hh>
 
+#include <texture-processor/convert.hh>
 #include <texture-processor/fwd.hh>
 #include <texture-processor/image_view.hh>
 
@@ -11,13 +12,22 @@ namespace tp
 {
 namespace lookup
 {
-template <class ViewT>
+// TODO: allow customized convert
+template <class PixelT, class ViewT>
 auto clamped(ViewT view)
 {
     using ipos_t = typename ViewT::ipos_t;
     return [view, vc = ipos_t(view.extent().to_ivec() - 1)](ipos_t const& p) -> decltype(auto) {
         // clamped lookup
-        return view(tg::clamp(p, ipos_t(0), vc));
+        if constexpr (std::is_same_v<PixelT, typename ViewT::pixel_t>)
+            return view(tg::clamp(p, ipos_t(0), vc));
+        else
+        {
+            auto src = view(tg::clamp(p, ipos_t(0), vc));
+            PixelT target;
+            default_converter{}(target, src);
+            return target;
+        }
     };
 }
 }
@@ -25,15 +35,14 @@ auto clamped(ViewT view)
 namespace interpolation
 {
 // TODO: allow customized mix
-template <class ViewT, class LookupF>
+template <class PixelT, class ViewT, class LookupF>
 auto linear(LookupF&& lookup)
 {
     using pos_t = typename ViewT::pos_t;
     using ipos_t = typename ViewT::ipos_t;
-    using pixel_t = typename ViewT::pixel_t;
     if constexpr (ViewT::dimensions == 1)
     {
-        return [lookup = cc::forward<LookupF>(lookup)](pos_t const& p) -> pixel_t {
+        return [lookup = cc::forward<LookupF>(lookup)](pos_t const& p) -> PixelT {
             auto i0 = tg::ifloor(p);
             auto i1 = i0 + ipos_t(1);
 
@@ -47,7 +56,7 @@ auto linear(LookupF&& lookup)
     }
     else if constexpr (ViewT::dimensions == 2)
     {
-        return [lookup = cc::forward<LookupF>(lookup)](pos_t const& p) -> pixel_t {
+        return [lookup = cc::forward<LookupF>(lookup)](pos_t const& p) -> PixelT {
             auto i00 = tg::ifloor(p);
             auto i10 = i00 + ipos_t(1, 0);
             auto i01 = i00 + ipos_t(0, 1);
@@ -125,20 +134,20 @@ struct sampler
 {
     using view_t = ViewT;
     using pos_t = typename view_t::pos_t;
-    using pixel_t = typename view_t::pixel_t;
 
     explicit sampler(ViewT const& /* used for deduction */, InterpolatorF interpolator) : _interpolator(cc::forward<InterpolatorF>(interpolator)) {}
 
-    pixel_t operator()(pos_t const& p) const { return this->sample(p); }
-    pixel_t sample(pos_t const& p) const { return this->_interpolator(p); }
+    auto operator()(pos_t const& p) const { return this->sample(p); }
+    auto sample(pos_t const& p) const { return this->_interpolator(p); }
 
 private:
     InterpolatorF _interpolator;
 };
 
-template <class ViewT>
+template <class PixelT = void, class ViewT>
 auto linear_clamped_px_sampler(ViewT view)
 {
-    return sampler(view, interpolation::linear<ViewT>(lookup::clamped(view)));
+    using pixel_t = tg::same_or<PixelT, typename ViewT::pixel_t>;
+    return sampler(view, interpolation::linear<pixel_t, ViewT>(lookup::clamped<pixel_t>(view)));
 }
 }
