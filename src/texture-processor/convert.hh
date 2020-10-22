@@ -12,7 +12,7 @@ struct default_converter
     {
         static_assert(std::is_constructible_v<TargetT, SourceT const&>, "cannot convert src to target");
         t = TargetT(s);
-        // TODO
+        // TODO: float -> 8bit or 16bit int should denormalize
     }
 };
 }
