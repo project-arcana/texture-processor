@@ -12,6 +12,8 @@ namespace tp
 template <class T>
 struct linear_storage_view
 {
+    static constexpr bool is_strided_linear = true;
+
     using data_ptr_t = std::conditional_t<std::is_const_v<T>, std::byte const*, std::byte*>;
     using pixel_access_t = T&;
 
@@ -24,9 +26,11 @@ struct linear_storage_view
 template <class T, class BlockT>
 struct linear_block_storage_view
 {
+    static constexpr bool is_strided_linear = false;
 };
 template <class T>
 struct z_storage_view
 {
+    static constexpr bool is_strided_linear = false;
 };
 }

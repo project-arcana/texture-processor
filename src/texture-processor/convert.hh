@@ -10,7 +10,8 @@ struct default_converter
     template <class TargetT, class SourceT>
     void operator()(TargetT& t, SourceT const& s) const
     {
-        t = s;
+        static_assert(std::is_constructible_v<TargetT, SourceT const&>, "cannot convert src to target");
+        t = TargetT(s);
         // TODO
     }
 };
