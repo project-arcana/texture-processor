@@ -112,6 +112,26 @@ From a user perspective, this provides the maximal performance and flexibility.
 * `si` uses `tp` for images and icons
 * `pv` / `pr` / `phi` accept `tp` to upload textures
 
+## Example Use Cases
+
+Note that Arcana and thus by extension `tp` is not only targeting games, but also real-time graphics und other interactive applications, like level editors, CAD tools, content processors, etc.
+That being said, an unsorted abridged catalog of exemplary use cases:
+
+* Resizing and resampling: An input image should be resized into a different size (upscale, downscale, cropped) and proper resampling is desired (including mipmaps and cubic filtering).
+* Heightmap creation: Using raycasting or procedural generation, heightmaps (of terrains or textures) can be created and stored in images.
+* Heightmap queries: On heightmaps, many derivative operations apply: tracing a ray in a heightmap, querying a certain height, creating a hierarchical z buffer from a heightmap, creating (relaxed) cones for cone step mapping, computing normal maps from the heightmap, computing ambient occlusion maps.
+* Baking: Given a mesh with multiple sets of UV coordinates, decals, painted on colors, ambient occlusion, or other metadata, we want to create a new set of UV coordinates and a set of output textures that have all the previous information "baked in". Other examples include the baking of terrain splat maps, the baking of lightmaps or lightprobes, or of ambient occlusion maps for levels.
+* Impostor baking: as part of LOD hierarchies, the highest levels might consist of baked billboards with various attributes. Billboards themselves might be composited / packed into an atlas or an array texture.
+* Basic image processing: histogram equalization, contrast/brightness adjustments, morphological operations, "hole-filling" (via push-pull), precomputed alpha, dithering.
+* Selections and masking: compositing, modifying, computing with masked subsets of images. E.g. user selections or tasks like "increase contrast of all pixels satisfying condition xyz".
+* Texture painting: "drawing" into an image, via 2D or 3D brushes.
+* Rasterized plots: some plots such as heatmaps or scatterplots of millions of points are best implemented via an underlying image.
+* Compositing and copying parts: When multiple small images should be composed to a larger one (via copy or blend), or parts of one image should be copied into a new image, `image_view`-based pixelwise copying and blending is extremely convenient. Actual use cases include dictionary or atlas texture generation.
+* Mipmaps, clipmaps, stacks: different level-of-detail considerations lead to different set-of-textures solutions. Mipmaps for space-saving averaging over arbitrary texture regions, clipmaps for focused multi-resolution, stacks (e.g. Gaussian stacks) for complex image statistics with minimal loss of information.
+* Look-up tables: Several textures are lookup tables for various functions, precomputed data, colormaps, gradients. Creating, converting, optimizing these LUTs (e.g. downsample as much as possible while maintaining some error tolerance) should be convenient.
+* Integral images: Often, summary statistics (sum, mean, variance) over rectangular image regions are needed. Integral images (or summed area tables) are a useful tool that precomputes a new image (O(n)) and can then answer sum/mean/variance queries for rectangular subviews in O(1).
+* Flexible 2D array: in many cases, `image` can be used as a convenient 2D/3D array and `image_view` as the `span<T>` equivalent. This includes level heightmaps, pathfinding metadata, other "information layers" that might be saved per-level.
+
 ## Open Questions
 
 * Should a GPU version be a goal? As an extra library?
