@@ -28,6 +28,7 @@ But it should also be usable as a general-purpose image processing library.
 * support broadcasting (i.e. zero strides)
 * component-wise operations on images
 * creating views to parts of pixels (e.g. a view to the green component of an rgb image)
+* masks and selections (and thus restricting algorithms to them)
 
 ### What is NOT part of `tp`?
 
