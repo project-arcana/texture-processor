@@ -29,19 +29,23 @@ struct image : image_view<BaseTraits>
 public:
     image() = default;
 
-    static image filled(extent_t e, pixel_t const& initial_value)
+    /// creates a new image of the desired size and initializes it with the provided value
+    [[nodiscard]] static image filled(extent_t e, pixel_t const& initial_value)
     {
         image img;
         img.resize(e, initial_value);
         return img;
     }
-    static image defaulted(extent_t e)
+    /// creates a new image of the desired size and calls the default ctor for each pixel
+    [[nodiscard]] static image defaulted(extent_t e)
     {
         image img;
         img.resize(e);
         return img;
     }
-    static image uninitialized(extent_t e)
+    /// creates a new image of the desired size, leaving the data uninitialized
+    /// CAUTION: this can easily lead to UB, especially with non-trivial types
+    [[nodiscard]] static image uninitialized(extent_t e)
     {
         image img;
         img.resize_uninitialized(e);
@@ -50,17 +54,17 @@ public:
 
     void resize(extent_t e)
     {
-        this->_storage.resize_defaulted(e.pixels());
+        this->_storage.resize_defaulted(e.pixel_count());
         this->init_data_view(e);
     }
     void resize(extent_t e, pixel_t const& fill_value)
     {
-        this->_storage.resize_filled(e.pixels(), fill_value);
+        this->_storage.resize_filled(e.pixel_count(), fill_value);
         this->init_data_view(e);
     }
     void resize_uninitialized(extent_t e)
     {
-        this->_storage.resize_uninitialized(e.pixels());
+        this->_storage.resize_uninitialized(e.pixel_count());
         this->init_data_view(e);
     }
 

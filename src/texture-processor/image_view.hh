@@ -55,10 +55,10 @@ public:
     bool has_natural_stride() const { return detail::is_natural_stride(_byte_stride, sizeof(pixel_t), _extent.to_ivec()); }
 
     /// size in bytes (if this were to be stored compactly)
-    size_t byte_size() const { return _extent.pixels() * sizeof(pixel_t); }
+    size_t byte_size() const { return _extent.pixel_count() * sizeof(pixel_t); }
 
     /// returns number of pixels
-    size_t pixel_count() const { return _extent.pixels(); }
+    size_t pixel_count() const { return _extent.pixel_count(); }
 
     /// returns true if the image view does not contain any pixels
     bool empty() const { return detail::is_any_zero(_extent.to_ivec()); }

@@ -15,7 +15,6 @@ But it should also be usable as a general-purpose image processing library.
 * all GPU pixel formats
 * all GPU texture types (1D, 2D, 3D, cubes, arrays)
 * mipmapped textures
-* multisampled textures
 * block compression formats
 * different data layouts (linear, strided, space filling)
 * complex pixel types (k-buffer, a-buffer, non-trivial types)
@@ -25,6 +24,7 @@ But it should also be usable as a general-purpose image processing library.
 * layout optimized iteration
 * constant-time rotate / mirror / slice / subview (where possible)
 * each dimension can be optionally compile-time constant (for improved performance and less image view state)
+* the number of channels can be a runtime value
 * support broadcasting (i.e. zero strides)
 * component-wise operations on images
 * creating views to parts of pixels (e.g. a view to the green component of an rgb image)
@@ -138,4 +138,5 @@ That being said, an unsorted abridged catalog of exemplary use cases:
 * Should a GPU version be a goal? As an extra library?
 * Should `tp` depend on `babel` or the other way around?
 * Should vector graphics be integrated or is a separate library better?
-* Are the per-pixel samples of a multisampled textures another dimension or a complex pixel format? (leaning towards the latter)
+* Should multisampled textures be supported?
+* If yes, are the per-pixel samples of a multisampled textures another dimension or a complex pixel format? (leaning towards the latter)
