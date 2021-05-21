@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include <typed-geometry/tg-lean.hh>
+
 namespace tp
 {
 enum class layout_type : uint8_t
@@ -108,19 +110,15 @@ struct image_metadata
     tp::pixel_format pixel_format = pixel_format::invalid;
     tp::pixel_space pixel_space = pixel_space::none;
 
+    uint32_t byte_per_channel = 0; // e.g. tg::color3 has 3 channels and 4 byte per channel
     uint32_t channels = 0;
     uint32_t max_mipmap = 0; // 0 means only LOD 0 is stored
 
     // support for up to 4 dimensions
-    int32_t extent0 = 0;
-    int32_t extent1 = 0;
-    int32_t extent2 = 0;
-    int32_t extent3 = 0;
+    tg::ivec4 extent;
 
     // strided linear can have custom strides per dimension
-    int32_t stride0 = 0;
-    int32_t stride1 = 0;
-    int32_t stride2 = 0;
-    int32_t stride3 = 0;
+    // NOTE: in bytes!
+    tg::ivec4 byte_stride;
 };
 }

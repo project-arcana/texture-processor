@@ -8,6 +8,7 @@
 #include <texture-processor/detail/iterator.hh>
 #include <texture-processor/detail/predicates.hh>
 #include <texture-processor/extents.hh>
+#include <texture-processor/image_metadata.hh>
 #include <texture-processor/storage_view.hh>
 #include <texture-processor/traits.hh>
 
@@ -66,6 +67,22 @@ public:
     /// returns the raw data pointer where the first pixel of this view lies
     /// NOTE: the actual data might be "behind" this data ptr if the stride is negative
     data_ptr_t data_ptr() const { return _data_ptr; }
+
+    /// creates a metadata entry for this view
+    image_metadata metadata() const
+    {
+        image_metadata md;
+        md.channels = channels;
+        md.max_mipmap = 0;
+        md.byte_per_channel = sizeof(typename traits::pixel_traits::scalar_t);
+        md.type = traits::image_type;
+        md.layout = traits::layout_type;
+        md.pixel_space = traits::pixel_traits::space;
+        md.pixel_format = traits::pixel_traits::format;
+        md.extent = tg::ivec4(_extent.to_ivec(), 1);
+        md.byte_stride = tg::ivec4(_byte_stride);
+        return md;
+    }
 
     // pixel access
 public:
@@ -244,12 +261,12 @@ public:
     // creation
 public:
     /// creates an image view from unchecked raw data
-    [[nodiscard]] static image_view from_data(data_ptr_t data, extent_t extent, ivec_t stride)
+    [[nodiscard]] static image_view from_data(data_ptr_t data, extent_t extent, ivec_t byte_stride)
     {
         image_view v;
         v._data_ptr = data;
         v._extent = extent;
-        v._byte_stride = stride;
+        v._byte_stride = byte_stride;
         return v;
     }
 

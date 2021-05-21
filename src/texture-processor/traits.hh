@@ -7,25 +7,11 @@
 
 #include <texture-processor/detail/slicing.hh>
 #include <texture-processor/fwd.hh>
-
-// keep includes minimal
-#include <typed-geometry/detail/comp_traits.hh>
+#include <texture-processor/image_metadata.hh>
+#include <texture-processor/pixel_traits.hh>
 
 namespace tp
 {
-namespace detail
-{
-// TODO: make customizable
-template <class PixelT>
-constexpr int channels_of()
-{
-    if constexpr (std::is_arithmetic_v<PixelT>) // includes bool
-        return 1;
-    else
-        return tg::detail::comp_size<PixelT>::value;
-}
-}
-
 namespace base_traits
 {
 template <class PixelT>
@@ -34,6 +20,7 @@ struct linear2D
     static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
     using pixel_t = PixelT;
+    using pixel_traits = pixel_traits<std::remove_cv_t<PixelT>>;
     using extent_t = extent2;
     using storage_t = linear_storage<pixel_t>;
     using storage_view_t = linear_storage_view<pixel_t>;
@@ -43,6 +30,8 @@ struct linear2D
     static constexpr bool is_writeable = !std::is_const_v<pixel_t>;
     static constexpr bool is_block_based = false;
     static constexpr bool is_strided_linear = true;
+    static constexpr tp::image_type image_type = tp::image_type::image2D;
+    static constexpr tp::layout_type layout_type = tp::layout_type::strided_linear;
 
     using position_iterator_t = detail::strided_linear_pos_iterator<dimensions>;
     using pixel_iterator_t = detail::strided_linear_pixel_iterator<dimensions, storage_view_t>;
@@ -55,6 +44,7 @@ struct z2D
     static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
     using pixel_t = PixelT;
+    using pixel_traits = pixel_traits<std::remove_cv_t<PixelT>>;
     using extent_t = extent2;
     using storage_t = z_storage<pixel_t>;
     using storage_view_t = z_storage_view<pixel_t>;
@@ -64,6 +54,8 @@ struct z2D
     static constexpr bool is_writeable = !std::is_const_v<pixel_t>;
     static constexpr bool is_block_based = false;
     static constexpr bool is_strided_linear = false;
+    static constexpr tp::image_type image_type = tp::image_type::image2D;
+    static constexpr tp::layout_type layout_type = tp::layout_type::z_order;
 
     using position_iterator_t = void; // TODO
 };
@@ -72,6 +64,7 @@ template <class PixelT, class BlockT>
 struct block2D
 {
     using pixel_t = PixelT;
+    using pixel_traits = pixel_traits<std::remove_cv_t<PixelT>>;
     using block_t = BlockT;
     using extent_t = extent2;
     using storage_t = linear_block_storage<pixel_t, block_t>;
@@ -83,6 +76,8 @@ struct block2D
     static constexpr bool is_block_based = true;
     static constexpr bool is_strided_linear = true;
     static constexpr auto block_sizes = block_t::block_sizes;
+    static constexpr tp::image_type image_type = tp::image_type::image2D;
+    static constexpr tp::layout_type layout_type = tp::layout_type::strided_linear;
 
     using position_iterator_t = void; // TODO
 };
@@ -100,6 +95,7 @@ struct traits : BaseT
     // NOTE: this should be const if image is not writeable
     using base_t = BaseT;
     using pixel_t = typename base_t::pixel_t;
+    using pixel_traits = typename base_t::pixel_traits;
 
     using ipos_t = tg::pos<base_t::dimensions, int>;
     using ivec_t = tg::vec<base_t::dimensions, int>;
@@ -109,7 +105,7 @@ struct traits : BaseT
     using storage_view_t = typename base_t::storage_view_t;
 
     // TODO: dynamic channels
-    static constexpr int channels = detail::channels_of<std::decay_t<pixel_t>>();
+    static constexpr int channels = pixel_traits::channels;
 
     template <class NewExtentT>
     using change_extent_t = void; // TODO
