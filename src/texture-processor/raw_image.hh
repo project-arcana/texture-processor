@@ -54,7 +54,7 @@ public:
     bool can_view_as() const;
 
     /// returns true, if .convert_to<ImageT>() will succeed
-    /// NOTE: you still need to respect proper const-ness
+    /// NOTE: currently, only exact matches are allowed, though this will be relaxed in the future
     template <class ImageT>
     bool can_convert_to() const;
 
@@ -63,8 +63,6 @@ public:
     template <class ImageViewT>
     ImageViewT view_as() const;
 
-    template <class ImageT>
-    ImageT convert_to();
     template <class ImageT>
     ImageT convert_to() const;
 
@@ -86,5 +84,79 @@ raw_image::raw_image(image_view<Traits> img)
     _data = cc::array<std::byte>::uninitialized(img.byte_size());
     auto target = image_view<Traits>::from_data(_data.data(), img.extent(), img.byte_stride());
     img.copy_to(target);
+}
+
+template <class ImageViewT>
+bool raw_image::can_view_as() const
+{
+    static_assert(is_image_view<ImageViewT>, "ImageViewT must be an image_view type");
+    using traits = typename ImageViewT::traits;
+    image_metadata ref_md = traits::make_metadata();
+
+    if (_metadata.type != ref_md.type)
+        return false;
+    if (_metadata.layout != ref_md.layout)
+        return false;
+    if (_metadata.pixel_format != ref_md.pixel_format)
+        return false;
+    if (_metadata.pixel_space != ref_md.pixel_space)
+        return false;
+    if (_metadata.byte_per_channel != ref_md.byte_per_channel)
+        return false;
+    if (_metadata.channels != ref_md.channels)
+        return false;
+    if (_metadata.max_mipmap != ref_md.max_mipmap)
+        return false;
+
+    // extend and strides don't matter here
+
+    return true;
+}
+
+template <class ImageT>
+bool raw_image::can_convert_to() const
+{
+    static_assert(is_image<ImageT>, "ImageT must be an image type");
+    // using traits = typename ImageT::traits;
+
+    // TODO: for now we need exact matches!
+    return can_view_as<typename ImageT::image_view_t>();
+}
+
+template <class ImageViewT>
+ImageViewT raw_image::view_as()
+{
+    CC_ASSERT(can_view_as<ImageViewT>());
+
+    using ivec_t = typename ImageViewT::ivec_t;
+
+    auto extent = ImageViewT::extent_t::from_ivec(ivec_t(_metadata.extent));
+    auto byte_stride = ivec_t(_metadata.byte_stride);
+
+    return ImageViewT::from_data(_data.data(), extent, byte_stride);
+}
+
+template <class ImageViewT>
+ImageViewT raw_image::view_as() const
+{
+    CC_ASSERT(can_view_as<ImageViewT>());
+    static_assert(ImageViewT::is_readonly, "raw_image is const, cannot create mutable image_view from it");
+
+    // const_cast is OK here, as we already checked that image view is readonly
+    return const_cast<raw_image*>(this)->view_as<ImageViewT>();
+}
+
+template <class ImageT>
+ImageT raw_image::convert_to() const
+{
+    CC_ASSERT(can_convert_to<ImageT>());
+
+    // TODO: support actual conversion
+
+    auto view = view_as<typename ImageT::image_view_t>();
+
+    auto img = ImageT::defaulted(view.extent());
+    view.copy_to(img);
+    return img;
 }
 }

@@ -71,14 +71,7 @@ public:
     /// creates a metadata entry for this view
     image_metadata metadata() const
     {
-        image_metadata md;
-        md.channels = channels;
-        md.max_mipmap = 0;
-        md.byte_per_channel = sizeof(typename traits::pixel_traits::scalar_t);
-        md.type = traits::image_type;
-        md.layout = traits::layout_type;
-        md.pixel_space = traits::pixel_traits::space;
-        md.pixel_format = traits::pixel_traits::format;
+        auto md = traits::make_metadata();
         md.extent = tg::ivec4(_extent.to_ivec(), 1);
         md.byte_stride = tg::ivec4(_byte_stride);
         return md;
@@ -185,6 +178,8 @@ public:
     // iteration
 public:
     /// returns an iterable that enumerates all pixels and their positions at the same
+    /// usage:
+    ///    for (auto&& [pos, value] : my_image) { ... }
     auto begin() const -> typename traits::entry_iterator_t { return {_data_ptr, _byte_stride, _extent.to_ivec()}; }
     cc::sentinel end() const { return {}; }
 

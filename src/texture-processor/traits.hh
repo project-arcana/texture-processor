@@ -20,7 +20,7 @@ struct linear2D
     static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
     using pixel_t = PixelT;
-    using pixel_traits = pixel_traits<std::remove_cv_t<PixelT>>;
+    using pixel_traits = tp::pixel_traits<std::remove_cv_t<PixelT>>;
     using extent_t = extent2;
     using storage_t = linear_storage<pixel_t>;
     using storage_view_t = linear_storage_view<pixel_t>;
@@ -44,7 +44,7 @@ struct z2D
     static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
     using pixel_t = PixelT;
-    using pixel_traits = pixel_traits<std::remove_cv_t<PixelT>>;
+    using pixel_traits = tp::pixel_traits<std::remove_cv_t<PixelT>>;
     using extent_t = extent2;
     using storage_t = z_storage<pixel_t>;
     using storage_view_t = z_storage_view<pixel_t>;
@@ -64,7 +64,7 @@ template <class PixelT, class BlockT>
 struct block2D
 {
     using pixel_t = PixelT;
-    using pixel_traits = pixel_traits<std::remove_cv_t<PixelT>>;
+    using pixel_traits = tp::pixel_traits<std::remove_cv_t<PixelT>>;
     using block_t = BlockT;
     using extent_t = extent2;
     using storage_t = linear_block_storage<pixel_t, block_t>;
@@ -85,9 +85,7 @@ struct block2D
 
 // TODO: "mapping views" (like treating an rgb image as a grayscale image via "map")
 // TODO: allow arrays as pixels for dynamic channel size
-// TODO: optimized power-of-two images
-// TODO: linear images that are not strided
-// TODO: multisampled images
+// TODO: optimized power-of-two images?
 // TODO: tiled images (each axis independently, maybe only sampler property)
 template <class BaseT>
 struct traits : BaseT
@@ -122,5 +120,52 @@ struct traits : BaseT
 
     // sanity checks
     static_assert(BaseT::is_writeable || std::is_const_v<pixel_t>, "read-only images should have const pixels");
+
+    static constexpr image_metadata make_metadata()
+    {
+        image_metadata md;
+        md.channels = channels;
+        md.max_mipmap = 0;
+        md.byte_per_channel = sizeof(typename pixel_traits::scalar_t);
+        md.type = base_t::image_type;
+        md.layout = base_t::layout_type;
+        md.pixel_space = pixel_traits::space;
+        md.pixel_format = pixel_traits::format;
+        return md;
+    }
 };
+
+namespace detail
+{
+template <class T>
+struct is_image_view_t : std::false_type
+{
+};
+template <class Traits>
+struct is_image_view_t<image_view<Traits>> : std::true_type
+{
+};
+template <class T>
+struct is_image_t : std::false_type
+{
+};
+template <class Traits>
+struct is_image_t<image<Traits>> : std::true_type
+{
+};
+}
+
+template <class T>
+static constexpr bool is_image = detail::is_image_t<T>::value;
+template <class T>
+static constexpr bool is_image_view = detail::is_image_view_t<T>::value;
+template <class T>
+static constexpr bool is_image_or_view = is_image<T> || is_image_view<T>;
+
+template <class ImageOrViewT>
+using pixel_type_of = typename ImageOrViewT::pixel_t;
+template <class ImageOrViewT>
+using image_type_of = image<typename ImageOrViewT::traits>;
+template <class ImageOrViewT>
+using image_view_type_of = image_view<typename ImageOrViewT::traits>;
 }

@@ -27,6 +27,11 @@ constexpr bool is_on_boundary(tg::ipos4 const& p, tg::ivec4 const& e)
     return p.x == 0 || p.y == 0 || p.z == 0 || p.w == 0 || p.x == e.x - 1 || p.y == e.y - 1 || p.z == e.z - 1 || p.w == e.w - 1;
 }
 
+constexpr int pos_sum(tg::ipos1 const& p) { return p.x; }
+constexpr int pos_sum(tg::ipos2 const& p) { return p.x + p.y; }
+constexpr int pos_sum(tg::ipos3 const& p) { return p.x + p.y + p.z; }
+constexpr int pos_sum(tg::ipos4 const& p) { return p.x + p.y + p.z + p.w; }
+
 constexpr bool is_any_zero(tg::ivec1 const& e) { return e.x == 0; }
 constexpr bool is_any_zero(tg::ivec2 const& e) { return e.x == 0 || e.y == 0; }
 constexpr bool is_any_zero(tg::ivec3 const& e) { return e.x == 0 || e.y == 0 || e.z == 0; }
