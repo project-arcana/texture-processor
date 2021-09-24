@@ -20,7 +20,7 @@ struct linear2D
     static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
     using pixel_t = PixelT;
-    using pixel_traits = tp::pixel_traits<std::remove_cv_t<PixelT>>;
+    using pixel_traits = tp::pixel_traits<std::decay_t<PixelT>>;
     using extent_t = extent2;
     using storage_t = linear_storage<pixel_t>;
     using storage_view_t = linear_storage_view<pixel_t>;
@@ -44,7 +44,7 @@ struct z2D
     static_assert(!std::is_reference_v<PixelT>, "cannot store references");
 
     using pixel_t = PixelT;
-    using pixel_traits = tp::pixel_traits<std::remove_cv_t<PixelT>>;
+    using pixel_traits = tp::pixel_traits<std::decay_t<PixelT>>;
     using extent_t = extent2;
     using storage_t = z_storage<pixel_t>;
     using storage_view_t = z_storage_view<pixel_t>;
@@ -64,7 +64,7 @@ template <class PixelT, class BlockT>
 struct block2D
 {
     using pixel_t = PixelT;
-    using pixel_traits = tp::pixel_traits<std::remove_cv_t<PixelT>>;
+    using pixel_traits = tp::pixel_traits<std::decay_t<PixelT>>;
     using block_t = BlockT;
     using extent_t = extent2;
     using storage_t = linear_block_storage<pixel_t, block_t>;

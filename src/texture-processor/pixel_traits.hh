@@ -60,13 +60,13 @@ constexpr tp::pixel_format infer_pixel_format_of()
     if constexpr (std::is_arithmetic_v<PixelT>) // includes bool
         return scalar_pixel_format<PixelT>::value;
     else
-        return scalar_pixel_format<std::remove_cv_t<decltype(std::declval<PixelT>()[0])>>::value;
+        return scalar_pixel_format<std::decay_t<decltype(std::declval<PixelT>()[0])>>::value;
 }
 
 template <class PixelT, class = void>
 struct pixel_scalar_t
 {
-    using type = std::remove_cv_t<decltype(std::declval<PixelT>()[0])>;
+    using type = std::decay_t<decltype(std::declval<PixelT>()[0])>;
 };
 template <class T>
 struct pixel_scalar_t<T, std::enable_if_t<std::is_arithmetic_v<T>>>
