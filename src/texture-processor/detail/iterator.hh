@@ -60,7 +60,7 @@ struct strided_linear_pos_iterator
             }
         }
         else
-            static_assert(cc::always_false<D>, "dimension not supported / implemented");
+            static_assert(cc::always_false_v<D>, "dimension not supported / implemented");
 
         if (detail::is_any_zero(extent))
             _extent[D - 1] = 0;
@@ -77,7 +77,7 @@ struct strided_linear_pos_iterator
         else if constexpr (D == 4)
             return {_idx[_order[0]], _idx[_order[1]], _idx[_order[2]], _idx[_order[3]]};
         else
-            static_assert(cc::always_false<D>, "dimension not supported");
+            static_assert(cc::always_false_v<D>, "dimension not supported");
     }
 
     void operator++()
