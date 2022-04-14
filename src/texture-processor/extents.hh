@@ -23,6 +23,12 @@ struct extent1
     constexpr bool operator!=(extent1 const& rhs) const { return width != rhs.width; }
 };
 
+template <class In>
+constexpr void introspect(In&& inspect, extent1& v)
+{
+    inspect(v.width, "width");
+}
+
 struct extent2
 {
     int width = 0;
@@ -35,6 +41,13 @@ struct extent2
     constexpr bool operator==(extent2 const& rhs) const { return width == rhs.width && height == rhs.height; }
     constexpr bool operator!=(extent2 const& rhs) const { return width != rhs.width || height != rhs.height; }
 };
+
+template <class In>
+constexpr void introspect(In&& inspect, extent2& v)
+{
+    inspect(v.width, "width");
+    inspect(v.height, "height");
+}
 
 struct extent3
 {
@@ -50,6 +63,14 @@ struct extent3
     constexpr bool operator!=(extent3 const& rhs) const { return width != rhs.width || height != rhs.height || depth != rhs.depth; }
 };
 
+template <class In>
+constexpr void introspect(In&& inspect, extent3& v)
+{
+    inspect(v.width, "width");
+    inspect(v.height, "height");
+    inspect(v.depth, "depth");
+}
+
 struct extent1_array
 {
     int width = 0;
@@ -62,6 +83,13 @@ struct extent1_array
     constexpr bool operator==(extent1_array const& rhs) const { return width == rhs.width && layers == rhs.layers; }
     constexpr bool operator!=(extent1_array const& rhs) const { return width != rhs.width || layers != rhs.layers; }
 };
+
+template <class In>
+constexpr void introspect(In&& inspect, extent1_array& v)
+{
+    inspect(v.width, "width");
+    inspect(v.layers, "layers");
+}
 
 struct extent2_array
 {
@@ -76,6 +104,14 @@ struct extent2_array
     constexpr bool operator==(extent2_array const& rhs) const { return width == rhs.width && height == rhs.height && layers == rhs.layers; }
     constexpr bool operator!=(extent2_array const& rhs) const { return width != rhs.width || height != rhs.height || layers != rhs.layers; }
 };
+
+template <class In>
+constexpr void introspect(In&& inspect, extent2_array& v)
+{
+    inspect(v.width, "width");
+    inspect(v.height, "height");
+    inspect(v.layers, "layers");
+}
 
 struct extent_cube
 {
@@ -93,4 +129,10 @@ struct extent_cube
     constexpr bool operator==(extent_cube const& rhs) const { return size == rhs.size; }
     constexpr bool operator!=(extent_cube const& rhs) const { return size != rhs.size; }
 };
+
+template <class In>
+constexpr void introspect(In&& inspect, extent_cube& v)
+{
+    inspect(v.size, "size");
+}
 }
